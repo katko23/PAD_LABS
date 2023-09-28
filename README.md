@@ -40,7 +40,7 @@ Reasoning:
    * It ensures that if one component, such as the chat system, experiences high traffic, it can be scaled independently without affecting other parts of the application.
    * It helps isolate potential issues and failures, ensuring that a problem in one microservice does not bring down the entire application.
  
-##Technology Stack and Communication Patterns##
+##Technology Stack and Communication Patterns ##
 
 Certainly, for a ride-sharing app with user and ride management in Python and chat/messaging and payment/billing in JavaScript, I will choose the following technology stack and communication patterns:
 
@@ -68,7 +68,7 @@ Reasoning:
 
 For asynchronous communication between microservices, I will consider using message queues like RabbitMQ or Apache Kafka . However, for the described components at this moment, RESTful APIs and WebSocket for chat should suffice for most use cases.
 
-## Data Management Approach:##
+## Data Management Approach: ##
 1. User and Ride Management Microservice (Python):
 •	This microservice will manage user profiles, ride information, and user-ride associations.
 •	It will have its own database for storing user and ride data.
@@ -233,7 +233,7 @@ The response includes details about each available ride, such as the ride ID, dr
 destination, departure time, available seats, and fare.Users can view and choose from the entire list 
 of available rides based on their preferences.
 
-## Data Flow##
+## Data Flow ##
 
 Data Flow Overview:
    * User registration and authentication are handled by the User and Ride Management Microservice.
