@@ -3,7 +3,7 @@ The first laboratory on PAD course in UTM
 
 My project is a ride-sharing app with features like ride booking, chat functionality, and more . It can benefit from a microservices architecture to ensure scalability, maintainability, and flexibility.
 
-##Real-world example :
+## Real-world example :
 
 A real-world example of a ride-sharing app that uses microservices architecture is Uber. Uber is a globally recognized ride-sharing platform that relies on microservices to provide its services at scale. Here's how Uber leverages microservices:
 Microservices in Uber:
@@ -16,7 +16,7 @@ Microservices in Uber:
 7.	**Surge Pricing**: Uber's dynamic pricing model uses microservices to adjust prices based on demand and supply in real-time.
 8.	**Analytics and Metrics**: Microservices are responsible for collecting and analyzing data related to rides, user behavior, and performance. This data helps Uber optimize its services.
 
-##My ride-sharing app microservices -
+## My ride-sharing app microservices -
 
 Here are two essential microservices for such an app:
 1.	**User and Ride Management Microservice:**
@@ -68,7 +68,7 @@ Reasoning:
 
 For asynchronous communication between microservices, I will consider using message queues like RabbitMQ or Apache Kafka . However, for the described components at this moment, RESTful APIs and WebSocket for chat should suffice for most use cases.
 
-##Data Management Approach:
+## Data Management Approach:
 1. User and Ride Management Microservice (Python):
 •	This microservice will manage user profiles, ride information, and user-ride associations.
 •	It will have its own database for storing user and ride data.
@@ -233,7 +233,7 @@ The response includes details about each available ride, such as the ride ID, dr
 destination, departure time, available seats, and fare.Users can view and choose from the entire list 
 of available rides based on their preferences.
 
-##Data Flow
+## Data Flow
 
 Data Flow Overview:
    * User registration and authentication are handled by the User and Ride Management Microservice.
