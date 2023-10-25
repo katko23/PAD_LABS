@@ -1,0 +1,18 @@
+# Use the official Python image
+FROM python:3.9
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the source code to the container
+COPY user_ride_management.py /app/
+
+# Install the required Python packages
+RUN pip install flask
+
+# Expose the port the application runs on
+EXPOSE 5000
+
+# Define the command to run the application
+CMD ["python", "user_ride_management.py"]
+

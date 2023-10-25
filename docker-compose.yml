@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  user_ride_management:
+    build:
+      context: .
+      dockerfile: Dockerfile_user_ride_management
+    ports:
+      - "5000:5000"
+    networks:
+      - my-network
+
+  realtime_chat:
+    build:
+      context: .
+      dockerfile: Dockerfile_realtime_chat
+    ports:
+      - "5001:5001"
+    networks:
+      - my-network
+
+  api_gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile_api_gateway
+    ports:
+      - "3000:3000"
+    networks:
+      - my-network
+    depends_on:
+      - user_ride_management
+      - realtime_chat
+
+networks:
+  my-network:
+    driver: bridge

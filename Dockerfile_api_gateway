@@ -1,0 +1,17 @@
+# Use the official Node.js image
+FROM node:14
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the source code to the container
+COPY gateway.js /app/
+
+# Install the required Node.js packages
+RUN npm install express http-proxy-middleware
+
+# Expose the port the application runs on
+EXPOSE 3000
+
+# Define the command to run the application
+CMD ["node", "gateway.js"]
