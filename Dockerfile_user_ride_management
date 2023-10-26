@@ -9,6 +9,9 @@ COPY user_ride_management.py /app/
 
 # Install the required Python packages
 RUN pip install flask
+RUN pip install PyJWT
+RUN pip install psycopg2
+RUN pip install pika
 
 # Expose the port the application runs on
 EXPOSE 5000

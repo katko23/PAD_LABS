@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  user_ride_management:
+    image: user-ride-management  # Specify the image name
+    ports:
+      - "5000:5000"
+    networks:
+      - my-network
+
+  realtime_chat:
+    image: realtime-chat  # Specify the image name
+    ports:
+      - "5001:5001"
+    networks:
+      - my-network
+
+  api_gateway:
+    image: api-gateway  # Specify the image name
+    ports:
+      - "3000:3000"
+    networks:
+      - my-network
+    depends_on:
+      - user_ride_management
+      - realtime_chat
+
+networks:
+  my-network:
+    driver: bridge

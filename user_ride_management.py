@@ -1,33 +1,65 @@
 import datetime
 import jwt
-
+import pika
+import psycopg2
+import time
 from flask import Flask, request, jsonify
+from threading import Thread
+
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
 
+time.sleep(100)
 
-# Sample data to simulate user and ride management
-users = {}
-rides = {}
-ride_id_counter = 1
+# Set up a connection to RabbitMQ
+connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
+channel = connection.channel()
+
+# Declare the same RabbitMQ queue for chat messages
+channel.queue_declare(queue='chat_messages')
+
+# Callback function to handle received chat messages
+def handle_chat_message(ch, method, properties, body):
+    print(f"Received chat message: {body}")
+    # Handle the received chat message here
+
+# Set up a consumer to receive chat messages in a separate thread
+def consume_messages():
+    channel.basic_consume(queue='chat_messages', on_message_callback=handle_chat_message, auto_ack=True)
+    print('Chat message consumer is running')
+    channel.start_consuming()
+
+# Start the message consumer in a separate thread
+message_consumer_thread = Thread(target=consume_messages)
+message_consumer_thread.start()
+
+# Database connection setup
+conn = psycopg2.connect(
+    dbname="padmicro1",
+    user="client",
+    password="client",
+    host="127.0.0.1",  # Use the provided host
+    port=5432  # Default PostgreSQL port
+)
+cursor = conn.cursor()
 
 # Endpoint for User Registration
 @app.route('/api/users/register', methods=['POST'])
 def user_register():
-    global users
     data = request.json
     username = data['username']
     email = data['email']
     password = data['password']
-    user_id = str(len(users) + 1)
-    users[user_id] = {
-        'userId': user_id,
-        'username': username,
-        'email': email,
-        'createdAt': '2023-09-20T08:00:00Z'
-    }
-    return jsonify(users[user_id]), 201
+
+    # Hash the password for security (use a proper password hashing library)
+    hashed_password = "hash_password_here"
+
+    # Insert user data into the 'users' table
+    cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
+                   (username, email, hashed_password))
+    conn.commit()
+
+    return jsonify({'message': 'User registered successfully'}), 201
 
 # Endpoint for User Login
 @app.route('/api/users/login', methods=['POST'])
@@ -36,34 +68,33 @@ def user_login():
     email = data['email']
     password = data['password']
 
-    for user_id, user_data in users.items():
-        if user_data['email'] == email and password == 'password123':  # Replace with actual user password validation
-            token = jwt.encode({'user_id': user_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
-                               app.config['SECRET_KEY'], algorithm='HS256')
-            return jsonify({'token': token, 'userId': user_id, 'username': user_data['username']}), 200
+    # Verify user credentials (validate email and password)
+    cursor.execute("SELECT user_id, username, password FROM users WHERE email = %s", (email,))
+    user_data = cursor.fetchone()
+
+    if user_data and user_data[2] == "hash_password_here":  # Replace with actual password validation
+        user_id, username, _ = user_data
+        token = jwt.encode({'user_id': user_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+                           app.config['SECRET_KEY'], algorithm='HS256')
+        return jsonify({'token': token, 'userId': user_id, 'username': username}), 200
 
     return jsonify({'message': 'Invalid email or password'}), 401
 
 # Endpoint for Booking a Ride
 @app.route('/api/rides/book', methods=['POST'])
 def book_ride():
-    global ride_id_counter,rides
     data = request.json
     user_id = data['userId']
     driver_id = data['driverId']
     origin = data['origin']
     destination = data['destination']
-    ride_id = 'ride' + str(ride_id_counter)
-    ride_id_counter += 1
-    rides[ride_id] = {
-        'rideId': ride_id,
-        'userId': user_id,
-        'driverId': driver_id,
-        'origin': origin,
-        'destination': destination,
-        'status': 'pending'
-    }
-    return jsonify(rides[ride_id]), 201
+
+    # Insert ride booking data into the 'rides' table
+    cursor.execute("INSERT INTO rides (user_id, driver_id, origin, destination, status) VALUES (%s, %s, %s, %s, %s)",
+                   (user_id, driver_id, origin, destination, 'pending'))
+    conn.commit()
+
+    return jsonify({'message': 'Ride booked successfully'}), 201
 
 # Endpoint for Creating a New Ride Offer
 @app.route('/api/rides/create', methods=['POST'])
@@ -75,24 +106,37 @@ def create_ride_offer():
     departure_time = data['departureTime']
     seats_available = data['seatsAvailable']
     fare = data['fare']
-    ride_id = 'ride' + str(ride_id_counter)
-    ride_id_counter += 1
-    rides[ride_id] = {
-        'rideId': ride_id,
-        'driverId': driver_id,
-        'origin': origin,
-        'destination': destination,
-        'departureTime': departure_time,
-        'seatsAvailable': seats_available,
-        'fare': fare
-    }
-    return jsonify(rides[ride_id]), 201
+
+    # Insert ride offer data into the 'rides' table
+    cursor.execute("INSERT INTO rides (user_id, driver_id, origin, destination, departure_time, seats_available, fare, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                   (driver_id, origin, destination, departure_time, seats_available, fare, 'available'))
+    conn.commit()
+
+    return jsonify({'message': 'Ride offer created successfully'}), 201
 
 # Endpoint for Viewing Available Rides
 @app.route('/api/rides/available', methods=['GET'])
 def get_available_rides():
-    # Implement filtering based on optional parameters
-    return jsonify(list(rides.values())), 200
+    # Retrieve available rides from the 'rides' table
+    cursor.execute("SELECT * FROM rides WHERE status = 'available'")
+    available_rides = cursor.fetchall()
+
+    # Convert the query result to a list of dictionaries
+    rides_data = []
+    for row in available_rides:
+        ride_id, user_id, driver_id, origin, destination, departure_time, seats_available, fare, status = row
+        rides_data.append({
+            'rideId': ride_id,
+            'userId': user_id,
+            'driverId': driver_id,
+            'origin': origin,
+            'destination': destination,
+            'departureTime': departure_time.isoformat(),
+            'seatsAvailable': seats_available,
+            'fare': fare,
+        })
+
+    return jsonify(rides_data), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
