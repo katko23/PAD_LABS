@@ -1,16 +1,19 @@
-# Use the official Node.js image
+# Use an official Node.js runtime as a parent image
 FROM node:14
 
-# Set the working directory
+# Create a directory to hold the application code inside the container
 WORKDIR /app
 
-# Copy the source code to the container
-COPY gateway.js /app/
+# Copy the package.json and package-lock.json files to the container
+COPY package*.json ./
 
-# Install the required Node.js packages
-RUN npm install express http-proxy-middleware
+# Install the application dependencies
+RUN npm install
 
-# Expose the port the application runs on
+# Copy the application source code to the container
+COPY . .
+
+# Expose the port the application will run on
 EXPOSE 3000
 
 # Define the command to run the application

@@ -5,14 +5,17 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy the source code to the container
-COPY realtime_chat.py /app/
+COPY real_time_chat.py /app/
 
 # Install the required Python packages
 RUN pip install flask-socketio eventlet
+RUN pip install PyJWT
+RUN pip install pymongo
+RUN pip install pika
 
 # Expose the port the application runs on
 EXPOSE 5001
 
 # Define the command to run the application
-CMD ["python", "realtime_chat.py"]
+CMD ["python", "real_time_chat.py"]
 

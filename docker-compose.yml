@@ -2,27 +2,46 @@ version: '3'
 
 services:
   user_ride_management:
-    build:
-      context: .
-      dockerfile: Dockerfile_user_ride_management
+    image: user-ride-management  # Specify the image name
+    container_name: user_ride_management
     ports:
       - "5000:5000"
     networks:
       - my-network
+    depends_on:
+      - postgres
+      - rabbitmq
+    links:
+      - rabbitmq
+      - postgres
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: padmicro1
+      POSTGRES_USER: client
+      POSTGRES_PASSWORD: client
 
   realtime_chat:
-    build:
-      context: .
-      dockerfile: Dockerfile_realtime_chat
+    image: realtime-chat  # Specify the image name
+    container_name: realtime_chat
     ports:
       - "5001:5001"
     networks:
       - my-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+    links:
+      - mongodb
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
 
   api_gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile_api_gateway
+    image: api-gateway  # Specify the image name
+    container_name: api_gateway
     ports:
       - "3000:3000"
     networks:
@@ -30,6 +49,41 @@ services:
     depends_on:
       - user_ride_management
       - realtime_chat
+    environment:
+      USER_RIDE_MANAGEMENT_HOST: user_ride_management
+      REALTIME_CHAT_HOST: realtime_chat
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - my-network
+    environment:
+      POSTGRES_DB: padmicro1
+      POSTGRES_USER: client
+      POSTGRES_PASSWORD: client
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - my-network
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - my-network
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 networks:
   my-network:
