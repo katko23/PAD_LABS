@@ -38,9 +38,10 @@ conn = psycopg2.connect(
     dbname="padmicro1",
     user="client",
     password="client",
-    host="127.0.0.1",  # Use the provided host
+    host="postgres",  # Update host to the service name of the PostgreSQL container
     port=5432  # Default PostgreSQL port
 )
+
 cursor = conn.cursor()
 
 # Endpoint for User Registration
