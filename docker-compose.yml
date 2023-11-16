@@ -2,48 +2,40 @@ version: '3'
 
 services:
   user_ride_management:
-    image: user-ride-management  # Specify the image name
+    image: user-ride-management
     container_name: user_ride_management
-    ports:
-      - "5000:5000"
     networks:
       - my-network
     depends_on:
       - postgres
       - rabbitmq
-    links:
-      - rabbitmq
-      - postgres
     environment:
       RABBITMQ_HOST: rabbitmq
       POSTGRES_HOST: postgres
       POSTGRES_DB: padmicro1
       POSTGRES_USER: client
       POSTGRES_PASSWORD: client
+    deploy:
+      replicas: 3  # Set the number of replicas
 
   realtime_chat:
-    image: realtime-chat  # Specify the image name
+    image: realtime-chat
     container_name: realtime_chat
-    ports:
-      - "5001:5001"
     networks:
       - my-network
     depends_on:
-      - mongodb
-      - rabbitmq
-    links:
       - mongodb
       - rabbitmq
     environment:
       RABBITMQ_HOST: rabbitmq
       MONGODB_HOST: mongodb
       MONGODB_PORT: 27017
+    deploy:
+      replicas: 3  # Set the number of replicas
 
   api_gateway:
-    image: api-gateway  # Specify the image name
+    image: api-gateway
     container_name: api_gateway
-    ports:
-      - "3000:3000"
     networks:
       - my-network
     depends_on:
@@ -52,6 +44,21 @@ services:
     environment:
       USER_RIDE_MANAGEMENT_HOST: user_ride_management
       REALTIME_CHAT_HOST: realtime_chat
+    deploy:
+      replicas: 3  # Set the number of replicas
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    networks:
+      - my-network
+    ports:
+      - "80:80"
+    depends_on:
+      - api_gateway
+    deploy:
+      replicas: 1  # Only one instance for NGINX
+
 
   postgres:
     image: postgres

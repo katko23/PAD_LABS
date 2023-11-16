@@ -139,5 +139,92 @@ def get_available_rides():
 
     return jsonify(rides_data), 200
 
+@app.route('/api/transactions', methods=['POST'])
+def initiate_transaction():
+    data = request.json
+
+    # Extract data needed for the transaction
+    user_data = data['userData']
+    ride_data = data['rideData']
+
+    # Start the two-phase commit process
+    try:
+        # Phase 1: Prepare
+        # Perform any necessary preparations (e.g., validate data)
+        prepare_result = prepare_transaction(user_data, ride_data)
+
+        # If preparation is successful, proceed to phase 2
+        if prepare_result:
+            # Phase 2: Commit or Rollback
+            commit_result = commit_transaction(user_data, ride_data)
+
+            if commit_result:
+                return jsonify({'message': 'Transaction committed successfully'}), 200
+            else:
+                return jsonify({'message': 'Transaction failed during commit phase'}), 500
+        else:
+            # If preparation fails, rollback the transaction
+            rollback_transaction(user_data, ride_data)
+            return jsonify({'message': 'Transaction aborted due to preparation failure'}), 400
+
+    except Exception as e:
+        # Handle exceptions and rollback the transaction if needed
+        rollback_transaction(user_data, ride_data)
+        return jsonify({'message': f'Transaction failed: {str(e)}'}), 500
+
+def prepare_transaction(user_data, ride_data):
+    try:
+        # Validate user data
+        if 'username' not in user_data or 'email' not in user_data or 'password' not in user_data:
+            raise Exception('Invalid user data')
+
+        # Validate ride data
+        if 'driverId' not in ride_data or 'origin' not in ride_data or 'destination' not in ride_data:
+            raise Exception('Invalid ride data')
+
+        # If all validations pass, return True
+        return True
+
+    except Exception as e:
+        # If preparation fails, return False
+        return False
+
+
+def commit_transaction(user_data, ride_data):
+    try:
+        # Write user data to the database
+        cursor.execute(
+            "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
+            (user_data['username'], user_data['email'], user_data['password'])
+        )
+
+        # Write ride data to the database
+        cursor.execute(
+            "INSERT INTO rides (driver_id, origin, destination, status) VALUES (%s, %s, %s, %s)",
+            (ride_data['driverId'], ride_data['origin'], ride_data['destination'], 'pending')
+        )
+
+        # Commit the changes
+        conn.commit()
+
+        return True
+
+    except Exception as e:
+        # Log the exception or perform any cleanup
+        return False
+
+
+def rollback_transaction(user_data, ride_data):
+    try:
+        # Undo any changes made during preparation (if applicable)
+        conn.rollback()
+        # If rollback is successful, return True
+        return True
+
+    except Exception as e:
+        # Log the exception or perform any cleanup
+        # If rollback fails, return False
+        return False
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -4,6 +4,7 @@
   "dependencies": {
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6",
+    "opossum": "^1.11.1",
     "socket.io": "^4.7.2"
   }
 }
